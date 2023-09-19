@@ -1,0 +1,217 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+  	<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="grid simple ">
+
+            <button class="btn btn-info" onclick="tb2csv()">导出</button>
+            <div class="grid-body no-border">
+              <table class="table table-striped table-flip-scroll cf" id="divtable">
+                <thead class="cf">
+                  <tr class="cen">
+                        <th width="150px">Sensor Area</th>
+                        <th width="150px">Time</th>
+                        <th width="150px">Type</th>
+                        <th width="100px">Value</th>
+                        <th width="150px">Sensor Status</th>
+                        <th width="150px">Alert Status</th>
+
+                  </tr>
+                </thead>
+                <tbody id="group_one">
+                {% for data in results %}
+                  <tr>
+                      <td>{{ data.quyu }}</td>
+                      <td>{{ data.date | date:"Y-m-d H:m:s" }}</td>
+                      <td>{{ data.type }}</td>
+                      <td>{{ data.value }}</td>
+                      <td style="color: lightgreen">正常</td>
+                      {% if data.status == 'normal' %}
+                      <td style="color: lightgreen">{{ data.status }}</td>
+                      {% elif data.status == 'abnormal' %}
+                      <td style="color: red">{{ data.status }}</td>
+                      {% elif data.status == 'alert' %}
+                       <td style="color: yellow">{{ data.status }}</td>
+                      {% endif %}
+
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            <span id="s"></span>
+                    <span id="pageindex1"></span>
+                    <a href="#" onclick="page.firstPage();">First Page</a>
+
+                    <a href="#" onclick="page.prePage();">Previous Page</a>
+
+                    <a href="#" onclick="page.nextPage();">Next Page</a>
+
+                    <a href="#" onclick="page.lastPage();">Last Page</a>
+
+
+                    <span id="pageindex"></span>
+              <br>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script type="text/javascript">
+// JavaScript Document
+/**
+ * JavaScript Pagination Class
+ * @param iAbsolute The maximum number of records per page
+ * @param sTableId The attribute ID value of the pagination table, as a String
+ * @param sTBodyId The attribute ID value of the TBODY section in the pagination table, as a String, this is the main content to be paginated
+ * @param sPageId The ID of the span element displaying the current page number
+ */
+function Page(iAbsolute, sTableId, sTBodyId, sPageId) {
+    this.absolute = iAbsolute; // Maximum records per page
+    this.tableId = sTableId;
+    this.tBodyId = sTBodyId;
+    this.rowCount = 0; // Total number of records
+    this.pageCount = 0; // Total number of pages
+    this.pageIndex = 0; // Page index
+    this.__oTable__ = null; // Table reference
+    this.__oTBody__ = null; // Content to be paginated
+    this.__dataRows__ = 0; // Record row reference
+    this.__oldTBody__ = null;
+    this.pageId = sPageId; // ID of the span element displaying the current page number
+
+    this.__init__(); // Initialize
+};
+
+
+Page.prototype.__init__ = function () {
+    this.__oTable__ = document.getElementById(this.tableId); // Get table reference
+    this.__oTBody__ = this.__oTable__.tBodies[this.tBodyId]; // Get tBody reference
+    this.__pageInnerDiv__ = document.getElementById(this.pageId);
+    this.__dataRows__ = this.__oTBody__.rows;
+    this.rowCount = this.__dataRows__.length;
+    try {
+        this.absolute = (this.absolute <= 0) || (this.absolute > this.rowCount) ? this.rowCount : this.absolute;
+        this.pageCount = parseInt(this.rowCount % this.absolute == 0
+            ? this.rowCount / this.absolute : this.rowCount / this.absolute + 1);
+    } catch (exception) { }
+
+    this.__updateTableRows__();
+};
+
+Page.prototype.nextPage = function () {
+    if (this.pageIndex + 1 < this.pageCount) {
+        this.pageIndex += 1;
+        this.__updateTableRows__();
+    }
+};
+
+Page.prototype.prePage = function () {
+    if (this.pageIndex >= 1) {
+        this.pageIndex -= 1;
+        this.__updateTableRows__();
+    }
+};
+
+Page.prototype.firstPage = function () {
+    if (this.pageIndex != 0) {
+        this.pageIndex = 0;
+        this.__updateTableRows__();
+    }
+};
+
+Page.prototype.lastPage = function () {
+    if (this.pageIndex + 1 != this.pageCount) {
+        this.pageIndex = this.pageCount - 1;
+        this.__updateTableRows__();
+    }
+
+Page.prototype.aimPage = function (iPageIndex) {
+    if (iPageIndex > this.pageCount - 1) {
+        this.pageIndex = this.pageCount - 1;
+    } else if (iPageIndex < 0) {
+        this.pageIndex = 0;
+    } else {
+        this.pageIndex = iPageIndex;
+    }
+    this.__updateTableRows__();
+};
+
+Page.prototype.__updateTableRows__ = function () {
+    var iCurrentRowCount = this.absolute * this.pageIndex;
+    var iMoreRow = this.absolute + iCurrentRowCount > this.rowCount ? this.absolute + iCurrentRowCount - this.rowCount : 0;
+    var tempRows = this.__cloneRows__();
+    //alert(tempRows === this.dataRows);
+    //alert(this.dataRows.length);
+    var removedTBody = this.__oTable__.removeChild(this.__oTBody__);
+    var newTBody = document.createElement("TBODY");
+    newTBody.setAttribute("id", this.tBodyId);
+
+    for (var i = iCurrentRowCount; i < this.absolute + iCurrentRowCount - iMoreRow; i++) {
+        newTBody.appendChild(tempRows[i]);
+    }
+    this.__oTable__.appendChild(newTBody);
+
+    this.__dataRows__ = tempRows;
+    this.__oTBody__ = newTBody;
+    //alert(this.dataRows.length);
+    //alert(this.absolute+iCurrentRowCount);
+    //alert("tempRows:"+tempRows.length);
+    document.getElementById(this.pageId).innerHTML = "now：" + (this.pageIndex + 1);
+    document.getElementById('pageindex1').innerHTML = "total：" + (this.pageCount);
+};
+
+Page.prototype.__cloneRows__ = function () {
+    var tempRows = [];
+    for (var i = 0; i < this.__dataRows__.length; i++) {
+
+        tempRows[i] = this.__dataRows__[i].cloneNode(1);
+    }
+    return tempRows;
+};
+</script>
+
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+
+<script type="text/javascript">
+	 $(document).ready(function() {
+		   page = new Page(50, 'divtable', 'group_one', "pageindex");
+	 });
+
+</script>
+
+<script>
+        function tb2csv() {
+            var $trs = $("#divtable").find("tr");
+            var str = "";
+            for (var i = 0; i < $trs.length; i++) {
+                var $tds = $trs.eq(i).find("td,th");
+                for (var j = 0; j < $tds.length; j++) {
+                    str += $tds.eq(j).text() + ",";
+                }
+                str += "\n";
+            }
+            var csv = "data:text/csv;charset=utf-8,\ufeff" + str;
+            var link = document.createElement("a");
+            link.setAttribute("href", csv);
+            link.setAttribute("download", new Date().getTime() + ".csv");
+            link.click();
+        }
+
+</script>
+
+</body>
+</html>

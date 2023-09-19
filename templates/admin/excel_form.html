@@ -1,0 +1,13 @@
+<!--excel_form.html -->
+{% extends 'admin/base.html' %}
+{% block content %}
+    <a href="../"><i class="el-icon-arrow-left"></i><span>return</span></a>
+    <div>
+        <form action="." method="POST" enctype="multipart/form-data">
+            {{ form.as_p }}
+            {% csrf_token %}
+            <button type="submit">upload</button>
+        </form>
+    </div>
+    <br/>
+{% endblock %}
